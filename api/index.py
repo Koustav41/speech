@@ -15,5 +15,11 @@ try:
 except ImportError:
     from main import app
 
-# Export app for Vercel Serverless Function
-__all__ = ["app"]
+# Support ASGI/WSGI handlers for Vercel Serverless
+try:
+    from mangum import Mangum
+    handler = Mangum(app)
+except ImportError:
+    handler = app
+
+__all__ = ["app", "handler"]

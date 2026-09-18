@@ -91,7 +91,9 @@ async def root():
 
 
 @app.get("/health", summary="Health Check")
+@app.get("/health/", include_in_schema=False)
 @app.get("/api/health", include_in_schema=False)
+@app.get("/api/health/", include_in_schema=False)
 async def health_check():
     """Verify backend status and provider configurations"""
     bhashini_ready = bhashini_service.is_configured()
@@ -109,7 +111,9 @@ async def health_check():
 
 
 @app.get("/providers", summary="Available AI Providers")
+@app.get("/providers/", include_in_schema=False)
 @app.get("/api/providers", include_in_schema=False)
+@app.get("/api/providers/", include_in_schema=False)
 async def get_providers():
     """Returns available speech-to-text and translation engines"""
     return {
@@ -137,7 +141,9 @@ async def get_providers():
 
 
 @app.get("/languages", summary="Supported Languages")
+@app.get("/languages/", include_in_schema=False)
 @app.get("/api/languages", include_in_schema=False)
+@app.get("/api/languages/", include_in_schema=False)
 async def get_languages():
     """Return list of supported Indian regional languages"""
     return {
@@ -148,7 +154,9 @@ async def get_languages():
 
 
 @app.post("/transcribe", response_model=TranscriptionResponse, summary="Transcribe and Translate Audio")
+@app.post("/transcribe/", response_model=TranscriptionResponse, include_in_schema=False)
 @app.post("/api/transcribe", response_model=TranscriptionResponse, include_in_schema=False)
+@app.post("/api/transcribe/", response_model=TranscriptionResponse, include_in_schema=False)
 async def transcribe_audio(
     audio: UploadFile = File(..., description="Audio file (wav, webm, mp3, ogg, m4a, mp4, flac, aac)"),
     source_language: str = Form(default="hi", description="Source regional language code (e.g. hi, bn, ta, te)"),

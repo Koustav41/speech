@@ -12,16 +12,24 @@ for path in [BACKEND_DIR, PROJECT_ROOT]:
 from backend.main import (
     app,
     transcribe_audio,
-    health_check,
-    get_languages,
-    get_providers,
     TranscriptionResponse
 )
 
-# Bind all endpoints to index as well
-for p in ["/transcribe", "/transcribe/", "/api/transcribe", "/api/transcribe/"]:
+# Route POST requests regardless of whether Vercel strips the prefix
+for p in ["/", "", "/transcribe", "/transcribe/", "/api/transcribe", "/api/transcribe/"]:
     if p not in [r.path for r in app.routes if hasattr(r, "path") and "POST" in getattr(r, "methods", [])]:
-        app.add_api_route(p, transcribe_audio, methods=["POST"], response_model=TranscriptionResponse, include_in_schema=False)
+        app.add_api_route(
+            p,
+            transcribe_audio,
+            methods=["POST"],
+            response_model=TranscriptionResponse,
+            include_in_schema=False
+        )
+
+@app.get("/transcribe", include_in_schema=False)
+@app.get("/api/transcribe", include_in_schema=False)
+async def transcribe_info():
+    return {"status": "online", "endpoint": "/api/transcribe", "methods": ["POST"]}
 
 try:
     from mangum import Mangum

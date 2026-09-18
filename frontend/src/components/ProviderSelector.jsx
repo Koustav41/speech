@@ -25,7 +25,7 @@ export default function ProviderSelector({
     },
     {
       id: 'gemini',
-      name: 'Google Gemini',
+      name: 'AI Model',
       sub: 'Multimodal Audio AI',
       icon: <Cpu size={16} />,
       isLive: providerStatus.gemini_configured,

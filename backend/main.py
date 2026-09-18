@@ -1,10 +1,12 @@
+import os
 import base64
 import time
 import logging
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from config import settings
@@ -28,6 +30,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
         "*"
     ],
     allow_credentials=False,
@@ -48,8 +52,19 @@ class TranscriptionResponse(BaseModel):
     audio_size_bytes: Optional[int] = None
 
 
-@app.get("/", summary="API Root")
+# Mount frontend production build if available
+FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+if os.path.exists(FRONTEND_DIST):
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+
+@app.get("/", summary="Application Root / Frontend UI")
 async def root():
+    index_html = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_html):
+        return FileResponse(index_html)
     return {
         "message": "Speech Transcription & Translation API is running",
         "docs_url": "/docs",
@@ -58,6 +73,7 @@ async def root():
 
 
 @app.get("/health", summary="Health Check")
+@app.get("/api/health", include_in_schema=False)
 async def health_check():
     """Verify backend status and provider configurations"""
     bhashini_ready = bhashini_service.is_configured()
@@ -75,6 +91,7 @@ async def health_check():
 
 
 @app.get("/providers", summary="Available AI Providers")
+@app.get("/api/providers", include_in_schema=False)
 async def get_providers():
     """Returns available speech-to-text and translation engines"""
     return {
@@ -102,16 +119,18 @@ async def get_providers():
 
 
 @app.get("/languages", summary="Supported Languages")
+@app.get("/api/languages", include_in_schema=False)
 async def get_languages():
     """Return list of supported Indian regional languages"""
     return {
         "languages": SUPPORTED_LANGUAGES,
-        "default_source": "hi",
+        "default_source": "auto",
         "default_target": "en"
     }
 
 
 @app.post("/transcribe", response_model=TranscriptionResponse, summary="Transcribe and Translate Audio")
+@app.post("/api/transcribe", response_model=TranscriptionResponse, include_in_schema=False)
 async def transcribe_audio(
     audio: UploadFile = File(..., description="Audio file (wav, webm, mp3, ogg, m4a, mp4, flac, aac)"),
     source_language: str = Form(default="hi", description="Source regional language code (e.g. hi, bn, ta, te)"),

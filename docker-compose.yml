@@ -1,0 +1,11 @@
+services:
+  speech-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: multilingual-speech-hub
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
